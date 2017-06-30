@@ -1,0 +1,332 @@
+@{
+    ViewBag.Title = "Inventory";
+    Layout = "~/Views/Shared/_LayoutPublic.cshtml";
+}
+
+<style>
+    .innerbox {
+        background-color: #ffffff;
+        width: 200px;
+        max-width: 200px;
+        height: 280px;
+        max-height: 280px;
+        display: inline-block;
+        border: 1px solid #a19f9f;
+        padding: 15px 5px 5px 5px;
+        margin: 5px 5px 5px 5px;
+    }
+
+    .scrollerino {
+        height: 350px;
+        overflow-y: scroll;
+    }
+
+    .wrapper {
+        background: url();
+    }
+
+    .panel {
+        border-color: #e3dcdc;
+    }
+
+    .planFormLabel {
+        color: #5D2E46;
+    }
+
+</style>
+
+<div ng-controller="inventoryController as ic">
+    <br />
+    <div class="panel container">
+        <div class="row">
+            <div class="panel-default">
+                <div class="panel-heading">
+                    <h3 align="center">
+                        My Inventory
+                    </h3>
+                </div>
+                <br />
+
+                <!-- start plan radio buttons -->
+                <div class="col-md-6">
+
+                    <div class="panel-group" id="accordion" ng-if="ic.items.length > 0">
+                        <div class="panel panel-default">
+                            <div class="panel-heading">
+                                <h4 class="panel-title">
+                                    <a data-toggle="collapse" data-parent="#accordion" href="#collapse1"> {{ic.selectedPlan ? "Plan: " + ic.selectedPlan.name: "Select a plan from your inventory"}}</a>
+
+                                </h4>
+                            </div>
+                            <div id="collapse1" class="panel-collapse collapse in">
+                                <div class="panel-body">
+                                    <div radio-group class="scrollerino">
+
+                                        <div ng-repeat="item in ic.items">
+                                            <label class="planFormLabel" for="plan"><input type="radio" ng-value="item" ng-model="ic.selectedPlan" ng-change="ic.planInsert(item)" /> {{item.name}}  {{item.quantity ? " - (" + item.quantity + " Owned)" : "" }}</label>
+
+                                            <a href="" class="btn fa-pull-right" ng-if=""><i class="fa"></i><span class="glyphicon glyphicon-plus">POST</span></a>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div align="center">
+                        <h4 ng-if="!(ic.items.length > 0)" ng-cloak>
+                            You do not currently have any plans!
+                            <br />
+                            <br/>
+                            <a ng-href="/product/purchase" class="btn-sm btn-cta-primary" align="center">Purchase plans</a>
+                        </h4>
+                    </div>
+                    <!-- end plan radio buttons-->
+                    <!-- start job radio buttons-->
+                    <div class="panel-group" id="accordion" ng-show="(ic.jobs.length > 0) && (ic.selectedPlan != null)">
+
+                        <div class="panel panel-default">
+                            <div class="panel-heading">
+                                <h4 class="panel-title">
+                                    <a data-toggle="collapse" data-parent="#accordion" href="#collapse2">{{ic.selectedJob ? "Job: " + ic.selectedJob.title : "Select a job"}}</a>
+                                </h4>
+                            </div>
+                            <div id="collapse2" class="panel-collapse collapse">
+                                <div class="panel-body">
+                                    <div radio-group class="scrollerino">
+                                        <div ng-repeat="item in ic.jobs">
+
+                                            <label class="planFormLabel" for="job"><input type="radio" ng-value="item" ng-model="ic.selectedJob" ng-change="ic.jobInsert(item)" /> {{item.title}}</label>
+                                            <ul>
+                                                <li ng-if="item.companyName">{{"Company: " + item.companyName}}</li>
+                                                <li ng-if="item.companyIndustry">{{"Industry: " + item.companyIndustry}}</li>
+                                                <li ng-if="item.companyLocation">{{"Location: " + item.companyLocation}}</li>
+                                                <li ng-if="item.salary">{{"Salary: " + (item.salary |  currency:"$":0)}}</li>
+                                                <li ng-if="item.type">{{"Employment type: " + item.type}}</li>
+                                            </ul>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div align="center">
+                    <h4 ng-if="!(ic.jobs.length > 0) && (ic.items.length > 0)" ng-cloak>
+                        You do not have any jobs to post!
+                        <br /><br/>
+                        <a ng-href="/Jobs/Create" class="btn-sm btn-cta-primary" align="center" ng-click="">Create a job</a>
+                    </h4>
+                </div>
+                <!-- END ACCORDION -->
+
+                <br/>
+                <div class="col-md-6" ng-show="ic.selectedJob">
+                    <div class="panel panel-default">
+                        <div class="panel-heading">
+                            <h4 class="panel-title">
+                                Description
+                            </h4>
+                        </div>
+                        <div class="panel-body scrollerino" ng-bind-html="ic.selectedJob.description">
+                        </div>
+                        <div class="panel-footer">
+
+
+                            <button class="btn-sm btn-cta-primary center-block" ng-click="ic.postJob()">POST JOB</button>
+
+                        </div>
+                    </div>
+
+                </div>
+            </div>
+        </div>
+        <br />
+    </div>
+</div>
+
+
+
+@section scripts{
+
+    <script type="text/javascript">
+        (function () {
+            "use strict";
+
+            angular.module('sabioApp')
+            .factory('$productService', ProductServiceFactory);
+
+            ProductServiceFactory.$inject = ['$baseService', '$sabio'];
+
+            function ProductServiceFactory($baseService, $sabio) {
+                var aSabioServiceObject = sabio.services.product;
+
+                var newService = $baseService.merge(true, {}, aSabioServiceObject, $baseService);
+
+                return newService;
+            }
+        })();
+
+        (function () {
+            "use strict";
+
+            angular.module('sabioApp')
+            .controller('inventoryController', InventoryController);
+
+            InventoryController.$inject = ['$scope', '$baseController', '$productService', 'toastr'];
+
+            function InventoryController($scope, $baseController, $productService, $modalService, $toastr) {
+                var vm = this;
+
+                vm.$productService = $productService;
+                vm.$scope = $scope;
+                vm.$toastr = $toastr;
+
+                vm.items = {};
+                vm.jobs = {};
+
+
+                vm.recruiterId = sabio.page.guid;
+                vm.personId = sabio.page.personId;
+
+                vm.selectedJob = null;
+                vm.selectedPlan = null;
+                vm.jobInsert = _jobInsert;
+                vm.planInsert = _planInsert;
+
+                vm.postJob = _postJob;
+                vm.postJobSuccess = _postJobSuccess;
+                vm.updateInventorySuccess = _updateInventorySuccess;
+
+                vm.getInventorySuccess = _getInventorySuccess;
+                vm.getJobSuccess = _getJobSuccess;
+                vm.getProdJobSuccess = _getProdJobSuccess;
+
+                $baseController.merge(vm, $baseController);
+                vm.notify = vm.$productService.getNotifier($scope);
+
+                render();
+
+                function render() {
+                    vm.$productService.getInventory(vm.recruiterId, vm.getInventorySuccess);
+                    vm.$productService.getJobs(vm.personId, vm.getJobSuccess);
+
+                }
+
+                //Hide when a plan is selected and opens the job section
+                function _planInsert(value) {
+                    vm.selectedPlan = value;
+                    $("#collapse1").collapse("hide");
+
+                    if (vm.selectedJob == null) {
+                        $("#collapse2").collapse("show");
+                    }
+                    console.log(vm.selectedPlan)
+
+                    // Empty vm.product
+                }
+
+                //Hides after selected
+                function _jobInsert(item) {
+                    vm.selectedJob = item;
+                    //$("#collapse2").collapse("hide");
+                    console.log(vm.selectedJob);
+                }
+
+                //Get list of my jobs
+                function _getJobSuccess(data, textStatus, jqXHR) {
+                    vm.notify(function () {
+                        vm.jobs = data.items;
+
+                        vm.$productService.getProdJob(vm.getProdJobSuccess);
+                    });
+                }
+
+                //Get list of jobs posted and compare to hide ones already posted
+                function _getProdJobSuccess(post, textStatus, jqXHR) {
+                    vm.notify(function () {
+                        var posted = post.items;
+                        console.log(posted);
+                        var jobs = vm.jobs;
+                        console.log(jobs)
+
+                        for (var i = 0; i < jobs.length; i++) {
+                            for (var j = 0; j < posted.length; j++) {
+                                if (jobs[i].id == posted[j].id) {
+                                    var index = jobs.indexOf(jobs[i]);
+                                    vm.jobs.splice(index, 1);
+                                }
+                            }
+                           
+                        }
+
+                    });
+                }
+
+                //Get list of plans already purchased
+                function _getInventorySuccess(data, textStatus, jqXHR) {
+                    vm.notify(function () {
+                        vm.items = data.items;
+                        console.log(vm.items);
+                    });
+                }
+
+                //Combines product with job and posts to database
+                function _postJob() {
+                    var data = {};
+
+                    data.jobId = vm.selectedJob.id;
+                    data.productId = vm.selectedPlan.productId;
+                    data.duration = vm.selectedPlan.duration;
+                    vm.$productService.postJob(data, vm.postJobSuccess);
+                }
+
+
+                function _postJobSuccess(data, textStatus, jqXHR) {
+                    vm.notify(function () {
+
+                        //subtract from the inventory's quantity
+
+                        var item = {};
+                        item.recruiterId = vm.recruiterId;
+                        item.productId = vm.selectedPlan.productId;
+                        item.quantity = vm.selectedPlan.quantity - 1;
+                        vm.$productService.updateInv(vm.personId, item, vm.updateInventorySuccess);
+
+                        window.location.href = '/Recruiter/Dashboard';
+                    });
+                }
+                function _updateInventorySuccess(data, textStatus, jqXHR) {
+                    console.log("Inventory Updated");
+                }
+            }
+
+        })();
+
+        sabio.services.product = sabio.services.product || {};
+
+        //Get Inventory
+        sabio.services.product.getInventory = function (id, onSuccess) {
+            sabio.page.sendAjax("inventory/" + id, sabio.page.ajaxType.GET, null, onSuccess);
+        }
+
+        sabio.services.product.getJobs = function (id, onSuccess) {
+            sabio.page.sendAjax("job/person/" + id, sabio.page.ajaxType.GET, null, onSuccess);
+        }
+
+        sabio.services.product.getProdJob = function (onSuccess) {
+            sabio.page.sendAjax("job/product", sabio.page.ajaxType.GET, null, onSuccess);
+        }
+
+        sabio.services.product.postJob = function (data, onSuccess) {
+            sabio.page.sendAjax("job/product/", sabio.page.ajaxType.POST, data, onSuccess);
+        }
+
+        sabio.services.product.updateInv = function (id, data, onSuccess) {
+            sabio.page.sendAjax("inventory/" + id, sabio.page.ajaxType.PUT, data, onSuccess);
+        }
+    </script>
+
+
+
+}
