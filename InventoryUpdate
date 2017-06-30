@@ -1,0 +1,39 @@
+USE [C30]
+GO
+/****** Object:  StoredProcedure [dbo].[Inventory_Update]    Script Date: 6/29/2017 6:33:10 PM ******/
+SET ANSI_NULLS ON
+GO
+SET QUOTED_IDENTIFIER ON
+GO
+ALTER proc [dbo].[Inventory_Update]
+		@RecruiterId nvarchar(128)
+		,@ProductId int
+		,@Quantity int
+
+as
+/*
+Declare @RecruiterId nvarchar(128) = 'f06bf53f-f411-4caf-9f5c-fc0e0edfb2d4'
+		,@ProductId int = 10
+		,@Quantity int = 8
+
+Execute dbo.Inventory_Update
+				@RecruiterId
+				,@ProductId
+				,@Quantity
+
+Select * from dbo.Inventory
+
+
+*/
+
+
+BEGIN
+UPDATE [dbo].[Inventory]
+   SET [RecruiterId] = @RecruiterId
+      ,[ProductId] = @ProductId
+      ,[Quantity] = @Quantity
+ WHERE RecruiterId = @RecruiterId and ProductId = @ProductId
+
+ IF @Quantity = 0 DELETE FROM Inventory where RecruiterId = @RecruiterId and ProductId = @ProductId
+END
+
