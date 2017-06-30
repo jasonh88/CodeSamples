@@ -1,0 +1,58 @@
+USE [C30]
+GO
+/****** Object:  StoredProcedure [dbo].[Inventory_Insert]    Script Date: 6/29/2017 6:31:50 PM ******/
+SET ANSI_NULLS ON
+GO
+SET QUOTED_IDENTIFIER ON
+GO
+
+ALTER proc [dbo].[Inventory_Insert]
+@InventoryTableType InventoryTableType READONLY
+as
+
+/*
+Declare @RecruiterId nvarchar(128) = 'f06bf53f-f411-4caf-9f5c-fc0e0edfb2d4'
+								,@ProductId int = 10
+								,@Name nvarchar(100) = '30 Day Job Posting'
+								,@Quantity int = '3'
+								,@Duration int = '30'
+
+
+Execute dbo.Inventory_Insert
+						@RecruiterId
+						,@ProductId
+						,@Name
+						,@Quantity
+						,@Duration
+
+Select * from Inventory
+*/
+
+
+MERGE Inventory AS TARGET
+USING @InventoryTableType AS SOURCE
+ON (TARGET.RecruiterId = SOURCE.RecruiterId and TARGET.ProductId = SOURCE.ProductId)
+
+WHEN MATCHED THEN
+
+UPDATE SET TARGET.Quantity = TARGET.Quantity + SOURCE.Quantity
+
+WHEN NOT MATCHED THEN
+INSERT
+           (RecruiterId
+           ,ProductId
+           ,Name
+           ,Quantity
+		   ,Duration)
+     VALUES
+           (SOURCE.RecruiterId
+           ,SOURCE.ProductId
+           ,SOURCE.Name
+           ,SOURCE.Quantity
+		   ,SOURCE.Duration);
+
+
+
+
+
+
